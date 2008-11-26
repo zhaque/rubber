@@ -58,6 +58,7 @@ namespace :rubber do
             pass = "identified by '#{env.db_pass}'" if env.db_pass
             sudo "mysql -u root -e 'create database #{env.db_name};'"
             sudo "mysql -u root -e \"grant all on *.* to '#{env.db_user}'@'%' #{pass};\""
+            sudo "mysql -u root -e \"grant all on *.* to '#{env.db_user}'@'localhost' #{pass};\""
             sudo "mysql -u root -e \"grant select on *.* to '#{env.db_slave_user}'@'%' #{pass};\""
             sudo "mysql -u root -e \"grant replication slave on *.* to '#{env.db_replicator_user}'@'%' #{pass};\""
             sudo "mysql -u root -e \"flush privileges;\""
