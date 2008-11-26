@@ -110,6 +110,8 @@ namespace :rubber do
     DBNAME (required):     Database name to backup
   DESC
   task :backup_db do
+    system "touch /tmp/fullbackup-running"
+    
     dir = get_env('BACKUP_DIR', true)
     age = (get_env('BACKUP_AGE') || 3).to_i
     time_stamp = Time.now.strftime("%Y-%m-%d_%H-%M")
@@ -160,6 +162,39 @@ namespace :rubber do
         end
       end
     end
+    
+    if rubber_env.ec2_backup_bucket
+      puts "Removing all incremental backups"
+      AWS::S3::Bucket.objects(rubber_env.ec2_backup_bucket, :prefix => 'db-binlogs/').clone.each do |obj|
+        puts "Deleting #{obj.key}"
+        obj.delete        
+      end
+    end
+    
+    File.delete("/tmp/fullbackup-running")
+  end
+
+  desc "Backup binary logs to S3"
+  task :backup_binlogs do
+    sleep 1
+    
+    if File.exists?("/tmp/fullbackup-running")
+      puts "Full backup is running"
+      exit
+    end
+    
+    system %(mysql -e "FLUSH LOGS")
+
+    logs = Dir.glob("/var/log/mysql/mysql-bin.[0-9]*").sort
+    logs_to_archive = logs[0..-2]
+    init_s3
+    logs_to_archive.each do |log|
+      puts "Saving #{log}"
+      AWS::S3::S3Object.store("db-binlogs/#{File.basename(log)}", open(log), rubber_env.ec2_backup_bucket)
+    end
+
+    puts "Purging logs to #{File.basename(logs[-1])}"
+    system %(mysql -e "PURGE MASTER LOGS TO '#{File.basename(logs[-1])}'")
   end
 
   desc <<-DESC

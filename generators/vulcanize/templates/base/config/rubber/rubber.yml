@@ -54,7 +54,7 @@ ec2_key_file: "#{Dir[(File.expand_path('~') rescue '/root') + '/.ec2/*' + ec2_ke
 # ec2_image_bucket: "#{app_name}_images"
 
 # OPTIONAL: Needed for backing up database to s3
-# ec2_backup_bucket: "#{app_name}_backups"
+ec2_backup_bucket: "#{app_name}-backups"
 
 # REQUIRED: the ami and instance type for creating instances
 # The Ubuntu images at http://alestic.com/ work well

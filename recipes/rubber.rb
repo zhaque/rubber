@@ -643,7 +643,14 @@ namespace :rubber do
       break if stream == :err
     end
   end
-
+  
+  desc "Backup the database to S3"
+  task :backup_db, :roles => :db, :only => { :primary => true } do
+    rubber_env = rubber_cfg.environment.bind("mysql_master")
+    rake_env = "RAILS_ENV=#{rails_env} BACKUP_DIR=/mnt/db_backups DBUSER=#{rubber_env.db_user} DBPASS=#{rubber_env.db_pass} DBNAME=#{rubber_env.db_name} DBHOST=localhost"
+    sudo "sh -c 'cd #{current_path} && #{rake_env} rake rubber:backup_db'"    
+  end
+  
   def bundle_vol(image_name)
     env = rubber_cfg.environment.bind()
     ec2_key = env.ec2_key_file
