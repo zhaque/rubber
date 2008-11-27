@@ -196,6 +196,41 @@ namespace :rubber do
     puts "Purging logs to #{File.basename(logs[-1])}"
     system %(mysql -e "PURGE MASTER LOGS TO '#{File.basename(logs[-1])}'")
   end
+  
+  desc "Backup Solr index to S3"
+  task :backup_solr do
+    init_s3
+    path  = get_env('INDEX')
+    
+    unless File.directory?(path)
+      puts "There are no Solr index at #{path}"
+      exit
+    end
+    
+    sh "tar cjf /tmp/solr.tbz2 #{path}"
+    
+    timestamp = Time.now.strftime("%Y-%m-%d_%H-%M")
+    AWS::S3::S3Object.store("solr/#{RAILS_ENV}-dump.tbz2", open('/tmp/solr.tbz2'), rubber_env.ec2_backup_bucket)
+    
+    File.delete('/tmp/solr.tbz2')
+  end
+  
+  desc "Restores the Solr index from S3"
+  task :restore_solr do
+    init_s3
+    path  = get_env('INDEX')
+    owner = get_env('OWNER')
+    
+    solr_dump = AWS::S3::S3Object.find("solr/#{RAILS_ENV}-dump.tbz2", rubber_env.ec2_backup_bucket)
+  
+    open('/tmp/solr.tbz2', 'w') { |file| file.write(solr_dump.value) }
+    
+    sh "rm -rf #{path}"
+    sh "tar xjf /tmp/solr.tbz2 -C /"
+    sh "chown -R #{owner}:#{owner} #{path}"
+
+    File.delete('/tmp/solr.tbz2')
+  end
 
   desc <<-DESC
     Restores a database backup from s3.
@@ -237,15 +272,33 @@ namespace :rubber do
     raise "could not access backup file via s3" unless data
 
     puts "piping restore data to command [#{db_restore_cmd}]"
+    
     IO.popen (db_restore_cmd, mode='w') do |p|
       data.value do |segment|
         p.write segment
       end
     end
 
+    # load binlogs from S3 to /tmp/db-binlogs
+    binlogs = AWS::S3::Bucket.objects(rubber_env.ec2_backup_bucket, :prefix => "db-binlogs/mysql-bin")
+    
+    FileUtils.mkdir_p "/tmp/db-binlogs"
+    
+    sh "rm -rf /tmp/db-binlogs/*"
+    
+    binlogs.each do |binlog|
+      open("/tmp/#{binlog.key}", 'w') { |file| file.write(binlog.value) }
+    end
+    
+    # reapply binlogs to the database
+    Dir["/tmp/db-binlogs/mysql-bin.[0-9]*"].each do |log_file|
+      puts "Reapplying #{log_file}"
+      sh "mysqlbinlog --database=#{name} #{log_file} | mysql -u#{user} #{('-p' + pass) if pass}"
+    end
+    
+    sh "rm -rf /tmp/db-binlogs"
   end
-
-
+  
   def get_env(name, required=false)
     value = ENV[name]
     raise("#{name} is required, pass using environment") if required && ! value

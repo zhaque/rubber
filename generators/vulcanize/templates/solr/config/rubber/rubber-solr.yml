@@ -1,2 +1,1 @@
-roles:
-  solr:
+solr_index_dir: solr

@@ -644,6 +644,12 @@ namespace :rubber do
     end
   end
   
+  desc "Backup the database and Solr index to the S3"
+  task :backup do
+    backup_db
+    backup_solr
+  end
+  
   desc "Backup the database to S3"
   task :backup_db, :roles => :db, :only => { :primary => true } do
     rubber_env = rubber_cfg.environment.bind("mysql_master")
@@ -651,6 +657,33 @@ namespace :rubber do
     sudo "sh -c 'cd #{current_path} && #{rake_env} rake rubber:backup_db'"    
   end
   
+  desc "Backup Solr index to S3"
+  task :backup_solr, :roles => :solr do
+    rubber_env = rubber_cfg.environment.bind("solr")
+    rake_env = "RAILS_ENV=#{rails_env} INDEX=/#{current_path}/#{rubber_env.solr_index_dir}"
+    sudo "sh -c 'cd #{current_path} && #{rake_env} rake rubber:backup_solr'"
+  end
+  
+  desc "Restores the database and Solr index from S3"
+  task :restore do
+    restore_db
+    restore_solr
+  end
+  
+  desc "Restores the database from S3"
+  task :restore_db, :roles => :db, :only => { :primary => true } do
+    rubber_env = rubber_cfg.environment.bind("mysql_master")
+    rake_env = "RAILS_ENV=#{rails_env} BACKUP_DIR=/mnt/db_backups DBUSER=#{rubber_env.db_user} DBPASS=#{rubber_env.db_pass} DBNAME=#{rubber_env.db_name} DBHOST=localhost"
+    sudo "sh -c 'cd #{current_path} && #{rake_env} rake rubber:restore_db_s3'"
+  end
+  
+  desc "Restores the Solr index from S3"
+  task :restore_solr, :roles => :solr do
+    rubber_env = rubber_cfg.environment.bind("solr")
+    rake_env = "RAILS_ENV=#{rails_env} INDEX=/#{current_path}/#{rubber_env.solr_index_dir} OWNER=#{runner}"
+    sudo "sh -c 'cd #{current_path} && #{rake_env} rake rubber:restore_solr'"
+  end
+
   def bundle_vol(image_name)
     env = rubber_cfg.environment.bind()
     ec2_key = env.ec2_key_file
