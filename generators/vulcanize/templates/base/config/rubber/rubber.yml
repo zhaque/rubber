@@ -104,10 +104,10 @@ security_groups: [default]
 auto_security_groups: true
 
 # OPTIONAL: The packages to install on all instances
-packages: [build-essential, ruby-full, ruby1.8-dev, rake, irb, subversion]
+packages: [build-essential, ruby-full, ruby1.8-dev, rake, irb, subversion, libmagick9-dev]
 
 # OPTIONAL: The gems to install on all instances
-gems: [rails, open4, aws-s3]
+gems: [rails, open4, aws-s3, rmagick]
 
 # OPTIONAL: The URLs of additional gem sources
 gemsources: [http://gems.github.com]
