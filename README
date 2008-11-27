@@ -3,3 +3,22 @@ RubyOnRails applications to Amazon's Elastic Compute Cloud (EC2).
 
 See the documentation in the github wiki for more details:
 http://github.com/wr0ngway/rubber/wikis
+
+== Koonen Extensions
+* Github added as a source for Ruby gems
+* ImageMagic and RMagick are installed on bootstraping
+* Solr management commads -- cap rubber:solr:start/stop/restart
+  They expect to find scripts like solr.start/solr.stop at RAILS_ROOT/mySolr dir.
+* Database incrementatal backups to S3 every 5 mins
+* Full database backup once a day at 3 AM
+* Full Solr index backup onece a day at 4 AM
+* Cap tasks to backup/restore: cap rubber:backup, :backup_db, :backup_solr, :restore, :restore_db, :restore_solr
+* Samples of config files for m1.small & m1.large instance types are added to rubber/samples dir.
+  Basically variable parameters are: the number of mongrel, number of nginx workers, database & memcache memory settings.
+* Cap task koonen:deploy:cold works like original deploy:cold, 
+  but loads database dump from db/dump/project.sql instead of running migrations.
+  
+=== Configuration
+* Solr index dir in rubber-solr.yml/solr_index_dir (default is "solr")
+* EC2 backup bucket in rubber.yml/ec2_backup_bucket (default id app-backups)
+  NOTE: bucket must already exist.
