@@ -1,0 +1,9 @@
+
+# These will probably need to be used by the rubber module used for the web role (nginx)
+appserver_base_port: 8000
+appserver_count: "#{RAILS_ENV == 'production' ? 4 : 2}"
+
+roles:
+  app:
+    gems: [mongrel, mongrel_cluster]
+
