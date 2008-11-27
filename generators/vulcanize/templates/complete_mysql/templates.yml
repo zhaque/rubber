@@ -4,3 +4,4 @@ dependent_templates:
   - monit
   - munin
   - memcached
+  - solr
