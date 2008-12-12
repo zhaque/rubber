@@ -22,3 +22,22 @@ http://github.com/wr0ngway/rubber/wikis
 * Solr index dir in rubber-solr.yml/solr_index_dir (default is "solr")
 * EC2 backup bucket in rubber.yml/ec2_backup_bucket (default id app-backups)
   NOTE: bucket must already exist.
+
+=== Thin support
+* After thin configs are generated all standard tasks (deploy:start/stop/restart) will just work with thin.
+  There are no need to call low-level rubber:thin:start/stop/restart directly.
+
+* To add thin support for a new app:
+    script/generate vulcanize thin
+  or to generate a full rails stack with thin instead of mongrel:
+    script/generate vulcanize complete_mysql_thin
+
+* To add thin support to the existing mongrel app:
+  - stop all services:
+    cap deploy:stop
+  - remove mongrel configs:
+    script/destroy vulcanize mongrel
+  - add thin configs:
+    script/generate vulcanize thin
+  - redeploy the app:
+    cap deploy:cold (or cap koonen:deploy:cold)

@@ -1,0 +1,7 @@
+appserver_base_port: 8000
+appserver_count: "#{RAILS_ENV == 'production' ? 8 : 2}"
+
+roles:
+  app:
+    gems: [thin]
+

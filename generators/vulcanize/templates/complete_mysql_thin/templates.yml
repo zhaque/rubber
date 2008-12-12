@@ -1,0 +1,11 @@
+description: A complete mysql, nginx and thin deployment setup
+dependent_templates:
+  - base
+  - monit
+  - munin
+  - memcached
+  - solr
+  - mysql
+  - thin
+  - nginx
+  - haproxy
