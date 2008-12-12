@@ -41,3 +41,8 @@ http://github.com/wr0ngway/rubber/wikis
     script/generate vulcanize thin
   - redeploy the app:
     cap deploy:cold (or cap koonen:deploy:cold)
+
+=== Solr support
+* To make Solr-related tasks work, the instance should have "solr" role, 
+  so it should be started with something like:
+    ALIAS=production ROLES=web,haproxy,app,mysql_master,solr
