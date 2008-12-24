@@ -1,0 +1,4 @@
+roles:
+  web:
+    packages: [apache2-mpm-prefork apache2-prefork-dev]
+    gems: [fastthread rack]
